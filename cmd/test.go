@@ -4,6 +4,12 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	htemplate "html/template"
+	"log"
+	"os"
+	"text/template"
+
 	"github.com/spf13/cobra"
 )
 
@@ -15,8 +21,28 @@ var testCmd = &cobra.Command{
 	Args:       cobra.MinimumNArgs(1),
 	ArgAliases: []string{"template"},
 	Run: func(cmd *cobra.Command, args []string) {
-
-		cmd.Println("test called with", args, cmd.Flags().Changed("html"), cmd.Flags().Changed("json"))
+		html, _ := cmd.Flags().GetBool(`html`)
+		if html {
+			result, err := htemplate.ParseFiles(args...)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+				os.Exit(1)
+			}
+			fmt.Fprintln(os.Stderr, "All template files parsed correctly.")
+			err = result.Execute(os.Stdout, "")
+			if err != nil {
+				log.Fatalln(err.Error())
+			}
+		} else {
+			for _, t := range args {
+				_, err := template.ParseFiles(t)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err.Error())
+					os.Exit(1)
+				}
+			}
+			fmt.Fprintln(os.Stderr, "All template files parsed correctly.")
+		}
 	},
 }
 
