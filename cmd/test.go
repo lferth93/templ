@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 	htemplate "html/template"
-	"log"
 	"os"
 	"text/template"
 
@@ -28,11 +27,8 @@ var testCmd = &cobra.Command{
 				fmt.Fprintln(os.Stderr, err.Error())
 				os.Exit(1)
 			}
-			fmt.Fprintln(os.Stderr, "All template files parsed correctly.")
-			err = result.Execute(os.Stdout, "")
-			if err != nil {
-				log.Fatalln(err.Error())
-			}
+			fmt.Fprintln(os.Stderr, "All template files seems to be correct.")
+
 		} else {
 			for _, t := range args {
 				_, err := template.ParseFiles(t)
@@ -41,7 +37,7 @@ var testCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
-			fmt.Fprintln(os.Stderr, "All template files parsed correctly.")
+			fmt.Fprintln(os.Stderr, "All template files seems to be correct.")
 		}
 	},
 }
