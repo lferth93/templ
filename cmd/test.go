@@ -14,31 +14,25 @@ import (
 
 // testCmd represents the test command
 var testCmd = &cobra.Command{
-	Use:        "test",
+	Use:        "test template [template ...]",
 	Short:      "Tests a template file.",
 	Long:       `Test if a template file is correct and can be parsed.`,
 	Args:       cobra.MinimumNArgs(1),
 	ArgAliases: []string{"template"},
 	Run: func(cmd *cobra.Command, args []string) {
 		html, _ := cmd.Flags().GetBool(`html`)
+		err := error(nil)
 		if html {
-			result, err := htemplate.ParseFiles(args...)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(1)
-			}
-			fmt.Fprintln(os.Stderr, "All template files seems to be correct.")
+			_, err = htemplate.ParseFiles(args...)
 
 		} else {
-			for _, t := range args {
-				_, err := template.ParseFiles(t)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err.Error())
-					os.Exit(1)
-				}
-			}
-			fmt.Fprintln(os.Stderr, "All template files seems to be correct.")
+			_, err = template.ParseFiles(args...)
 		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		fmt.Fprintln(os.Stderr, "All template files seems to be correct.")
 	},
 }
 

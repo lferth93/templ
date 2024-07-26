@@ -1,27 +1,71 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	htemplate "html/template"
+	"io"
+	"os"
+	"text/template"
 
 	"github.com/spf13/cobra"
 )
 
+type templater interface {
+	Execute(wr io.Writer, data any) error
+}
+
 // evalCmd represents the eval command
 var evalCmd = &cobra.Command{
-	Use:   "eval",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:   "eval template [template ...] data",
+	Short: "Evaluates a list of template file with data.",
+	Long: `Evaluates a list of template files with data and 
+	prints the result to the standard output. 
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Only evaluates the first template file but it can 
+	use templates defined in the other passed files.`,
+	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("eval called")
+		html, _ := cmd.Flags().GetBool("html")
+		jsonF, _ := cmd.Flags().GetBool("json")
+
+		var tmpl templater
+		var err error
+
+		if html {
+			tmpl, err = htemplate.ParseFiles(args[:len(args)-1]...)
+		} else {
+			tmpl, err = template.ParseFiles(args[:len(args)-1]...)
+		}
+
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		data := map[string]interface{}{}
+		var content []byte
+		if jsonF {
+			content, err = os.ReadFile(args[len(args)-1])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+				os.Exit(1)
+			}
+		} else {
+			content = []byte(args[len(args)-1])
+		}
+		err = json.Unmarshal(content, &data)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
+		err = tmpl.Execute(os.Stdout, data)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err.Error())
+			os.Exit(1)
+		}
 	},
 }
 
